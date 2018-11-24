@@ -1,7 +1,13 @@
 # Org Protocol Handler #
 
-The Org Protocol Handler is a small AppleScript application that registers
-itself as the handler for all `org-protocol://` links.
+The Org Protocol Handler is a small AppleScript/Python application that
+registers itself as the handler for all `org-protocol://` links.
+
+If your system wants to visit an `org-protocol://` link, it will pass the value
+to this application, which will urldecode it and pass it to `emacsclient`. The
+net effect is that you can use a bookmarklet to build an `org-protocol://` link
+in your browser for things like saving the current page as a link in Org and
+that bookmarket will launch and focus Emacs.
 
 ## Configuration ##
 
@@ -10,30 +16,17 @@ is pointed to the correct copy of `emacsclient` on your system.
 
 Out of the box, it will run `/usr/local/bin/emacsclient`, which should be the
 correct copy if you are using Emacs from Homebrew. If you are not, or if that
-path differs in some way, you will need to open this application in Script
-Editor and adjust that path.
+path differs in some way, you will need to create a configuration file.
 
-### Configurable Properties ###
+Create a file called `~/.orgprotocol.ini`. Note the leading period in the
+filename. This file should simply contain these two lines:
 
-Within the script, there are two configurable properties you may need to twiddle
-around with:
+```
+[emacsclient]
+path=/path/to/your/emacsclient
+```
 
-`emacsClientLocation`, as noted above, must be the full absolute path to the
-`emacsclient` executable. It is defaulted to `/usr/local/bin/emacsclient` for
-your convenience. You may like to set this to something like
-`/Applications/Emacs.app/Contents/MacOS/bin/emacsclient` if you don't have
-symbolic links to that program on your system.
-
-`emacsSocketLocation` should be the full absolute path to the location of the
-Emacs server socket _file_. Most people will not have to set this property, but
-I found that in some distributions of Emacs, the server and `emacsclient` differ
-in their opinions of where the server file should be saved and found.
-
-I have configured `server-socket-dir` to `(expand-file-name "server"
-user-emacs-directory)` (you must do this before calling `(server-start)`), and I
-have set this property to `~/.emacs.d/server/server`.
-
-## How? ##
+## How does it work? ##
 
 In OS X, any application that exists in your root `/Applications` directory and
 that contains a `CFBundleURLTypes` stanza in its `Info.plist` will be registered
@@ -68,6 +61,12 @@ This application is designed to accept an `org-protocol://` URL and it simply
 launches `emacsclient` and hands that URL to it. This enables your
 already-running Emacs server to be triggered by `org-protocol://` links from
 anywhere on your system.
+
+Neither the `emacsclient` program nor Emacs itself will decode the URL; it
+expects to receive a raw URL with spaces and all, but the URL will need to be
+encoded to preserve spaces (especially) when the handler is called by your
+browser, so this handler uses a small Python script to decode the URL and also
+extract the page title from it so we can display a notification.
 
 ## Why? ##
 
