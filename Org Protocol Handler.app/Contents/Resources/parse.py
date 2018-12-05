@@ -11,7 +11,14 @@ import urlparse
 def read_config():
     ini_path = os.path.expanduser("~/.orgprotocol.ini")
     config = ConfigParser.ConfigParser()
-    config.read([ini_path])
+    try:
+        config.read([ini_path])
+    except Exception:
+        print("Error reading %s" % ini_path)
+    return config
+
+
+def emacs_client_command(config):
     path = emacsclient_path(config)
     options = emacsclient_options(config)
     cmd = path + options
@@ -86,7 +93,8 @@ def main():
 
     url = sys.argv[1]
     raw_url = urllib.unquote(url)
-    cmd = read_config()
+    config = read_config()
+    cmd = emacs_client_command(config)
     cmd.append(raw_url)
     subprocess.check_output(cmd)
     print(get_title(url, is_old_style_link(url)))
