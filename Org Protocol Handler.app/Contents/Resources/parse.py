@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-import sys
-import urlparse
-import urllib
-import subprocess
-import os
 import ConfigParser
+import os
+import subprocess
+import sys
+import urllib
+import urlparse
 
 
 def read_config():
