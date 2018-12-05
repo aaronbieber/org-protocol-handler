@@ -8,18 +8,31 @@ import os
 import ConfigParser
 
 
-def get_emacsclient_path():
-    """Get the configured path to `emacsclient`, or the default."""
+def read_config():
     ini_path = os.path.expanduser("~/.orgprotocol.ini")
-    if os.path.exists(ini_path):
-        config = ConfigParser.ConfigParser()
-        try:
-            config.read([ini_path])
-            return config.get("emacsclient", "path")
-        except Exception, e:
-            pass
+    config = ConfigParser.ConfigParser()
+    config.read([ini_path])
+    path = emacsclient_path(config)
+    options = emacsclient_options(config)
+    cmd = path + options
+    return cmd
 
-    return "/usr/local/bin/emacsclient"
+
+def emacsclient_path(config):
+    """Get the configured path to `emacsclient`, or the default."""
+    try:
+        path = config.get("emacsclient", "path")
+    except Exception, e:
+        path = "/usr/local/bin/emacsclient"
+    return [path]
+
+
+def emacsclient_options(config):
+    """Unpack options from config file"""
+    try:
+        return dict(config.items('options')).values()
+    except Exception, e:
+        return []
 
 
 def is_old_style_link(url):
@@ -73,8 +86,9 @@ def main():
 
     url = sys.argv[1]
     raw_url = urllib.unquote(url)
-
-    subprocess.check_output([get_emacsclient_path(), raw_url])
+    cmd = read_config()
+    cmd.append(raw_url)
+    subprocess.check_output(cmd)
     print(get_title(url, is_old_style_link(url)))
 
 
