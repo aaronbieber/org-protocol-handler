@@ -11,6 +11,7 @@ import six.moves.urllib.parse
 
 
 def read_config():
+    """Read and parse ~/.orgprotocol.ini if it exists."""
     ini_path = os.path.expanduser("~/.orgprotocol.ini")
     config = six.moves.configparser.ConfigParser()
     try:
@@ -21,6 +22,10 @@ def read_config():
 
 
 def emacs_client_command(config):
+    """Construct a list, each member of which is a part of the
+    `emacsclient` command to be run by `subprocess` and used in
+    main.scpt. Provides the default `emacsclient` executable if
+    ~/.orgprotocol.ini doesn't exist."""
     path = emacsclient_path(config)
     options = emacsclient_options(config)
     cmd = path + options
@@ -31,16 +36,18 @@ def emacsclient_path(config):
     """Get the configured path to `emacsclient`, or the default."""
     try:
         path = config.get("emacsclient", "path")
-    except Exception as e:
+    except Exception:
         path = "/usr/local/bin/emacsclient"
     return [path]
 
 
 def emacsclient_options(config):
-    """Unpack options from config file"""
+    """Unpack options from config file.  Options are appeneded to the final
+    `emacsclient` command.  Returns an empty list if no options are specified.
+    """
     try:
-        return list(dict(config.items('options')).values())
-    except Exception as e:
+        return list(dict(config.items("options")).values())
+    except Exception:
         return []
 
 
