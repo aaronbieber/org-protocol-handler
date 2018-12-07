@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 
-import ConfigParser
+from __future__ import absolute_import, print_function
+
 import os
 import subprocess
 import sys
-import urllib
-import urlparse
+
+import six.moves
 
 
 def read_config():
+    """Read and parse ~/.orgprotocol.ini if it exists."""
     ini_path = os.path.expanduser("~/.orgprotocol.ini")
-    config = ConfigParser.ConfigParser()
+    config = six.moves.configparser.ConfigParser()
     try:
         config.read([ini_path])
     except Exception:
@@ -19,6 +21,10 @@ def read_config():
 
 
 def emacs_client_command(config):
+    """Construct a list, each member of which is a part of the
+    `emacsclient` command to be run by `subprocess` and used in
+    main.scpt. Provides the default `emacsclient` executable if
+    ~/.orgprotocol.ini doesn't exist."""
     path = emacsclient_path(config)
     options = emacsclient_options(config)
     cmd = path + options
@@ -29,16 +35,18 @@ def emacsclient_path(config):
     """Get the configured path to `emacsclient`, or the default."""
     try:
         path = config.get("emacsclient", "path")
-    except Exception, e:
+    except Exception:
         path = "/usr/local/bin/emacsclient"
     return [path]
 
 
 def emacsclient_options(config):
-    """Unpack options from config file"""
+    """Unpack options from config file.  Options are appeneded to the final
+    `emacsclient` command.  Returns an empty list if no options are specified.
+    """
     try:
-        return dict(config.items('options')).values()
-    except Exception, e:
+        return list(dict(config.items("options")).values())
+    except Exception:
         return []
 
 
@@ -56,15 +64,15 @@ def is_old_style_link(url):
 
 def get_new_style_title(url):
     """Get the title from a new style URL."""
-    url_fragments = urlparse.urlparse(url)
+    url_fragments = six.moves.urllib.parse.urlparse(url)
 
     # url_fragments is a 6 tuple; index 4 is the querystring
     if not len(url_fragments[4]):
         return ""
 
-    qs_parts = urlparse.parse_qs(url_fragments[4])
+    qs_parts = six.moves.urllib.parse.parse_qs(url_fragments[4])
 
-    if "title" in qs_parts.keys() and len(qs_parts["title"]):
+    if "title" in list(qs_parts.keys()) and len(qs_parts["title"]):
         return qs_parts["title"][0]
 
     return ""
@@ -72,10 +80,10 @@ def get_new_style_title(url):
 
 def get_old_style_title(url):
     """Get the title from an old style URL."""
-    url_fragments = urlparse.urlparse(url)
+    url_fragments = six.moves.urllib.parse.urlparse(url)
 
     path_parts = url_fragments[2].split("/")
-    return urllib.unquote(path_parts[4])
+    return six.moves.urllib.parse.unquote(path_parts[4])
 
 
 def get_title(url, is_old_style=True):
@@ -92,7 +100,7 @@ def main():
         sys.exit(1)
 
     url = sys.argv[1]
-    raw_url = urllib.unquote(url)
+    raw_url = six.moves.urllib.parse.unquote(url)
     config = read_config()
     cmd = emacs_client_command(config)
     cmd.append(raw_url)
