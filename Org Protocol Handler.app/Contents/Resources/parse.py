@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-from __future__ import absolute_import
-from six.moves import configparser
+from __future__ import absolute_import, print_function
+
 import os
 import subprocess
 import sys
-import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
-import six.moves.urllib.parse
+
+import six.moves
 
 
 def read_config():
