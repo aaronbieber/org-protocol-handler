@@ -1,25 +1,45 @@
 #!/usr/bin/env python
 
-import sys
-import urlparse
-import urllib
-import subprocess
-import os
 import ConfigParser
+import os
+import subprocess
+import sys
+import urllib
+import urlparse
 
 
-def get_emacsclient_path():
-    """Get the configured path to `emacsclient`, or the default."""
+def read_config():
     ini_path = os.path.expanduser("~/.orgprotocol.ini")
-    if os.path.exists(ini_path):
-        config = ConfigParser.ConfigParser()
-        try:
-            config.read([ini_path])
-            return config.get("emacsclient", "path")
-        except Exception, e:
-            pass
+    config = ConfigParser.ConfigParser()
+    try:
+        config.read([ini_path])
+    except Exception:
+        print("Error reading %s" % ini_path)
+    return config
 
-    return "/usr/local/bin/emacsclient"
+
+def emacs_client_command(config):
+    path = emacsclient_path(config)
+    options = emacsclient_options(config)
+    cmd = path + options
+    return cmd
+
+
+def emacsclient_path(config):
+    """Get the configured path to `emacsclient`, or the default."""
+    try:
+        path = config.get("emacsclient", "path")
+    except Exception, e:
+        path = "/usr/local/bin/emacsclient"
+    return [path]
+
+
+def emacsclient_options(config):
+    """Unpack options from config file"""
+    try:
+        return dict(config.items('options')).values()
+    except Exception, e:
+        return []
 
 
 def is_old_style_link(url):
@@ -73,8 +93,10 @@ def main():
 
     url = sys.argv[1]
     raw_url = urllib.unquote(url)
-
-    subprocess.check_output([get_emacsclient_path(), raw_url])
+    config = read_config()
+    cmd = emacs_client_command(config)
+    cmd.append(raw_url)
+    subprocess.check_output(cmd)
     print(get_title(url, is_old_style_link(url)))
 
 
